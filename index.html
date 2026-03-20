@@ -195,16 +195,12 @@
     
     currentDates = generateDates();
     
-    function getFilteredDatesForAnalytics() {
-        const start = new Date(analyticsStartDate);
-        const end = new Date(analyticsEndDate);
-        start.setHours(0, 0, 0, 0);
-        end.setHours(23, 59, 59, 999);
-        return currentDates.filter(date => {
-            const d = new Date(date.fullDate);
-            return d >= start && d <= end;
-        });
-    }
+ function getFilteredDatesForAnalytics() {
+    // Простое сравнение строк в формате ГГГГ-ММ-ДД
+    return currentDates.filter(date => {
+        return date.fullDate >= analyticsStartDate && date.fullDate <= analyticsEndDate;
+    });
+}
     
     function setSyncStatus(status) {
         const el = document.getElementById('syncStatus');
