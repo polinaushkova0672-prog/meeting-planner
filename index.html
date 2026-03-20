@@ -176,22 +176,29 @@
     
     const DAYS_MAP = { 'mon': 1, 'tue': 2, 'wed': 3, 'thu': 4, 'fri': 5, 'sat': 6, 'sun': 0 };
     
-    function generateDates() {
-        const dates = [];
-        const currentDate = new Date(START_DATE);
-        while (currentDate <= END_DATE) {
-            const dayOfWeek = currentDate.toLocaleDateString('ru-RU', { weekday: 'short' });
-            const dayMonth = currentDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
-            dates.push({
-                fullDate: currentDate.toISOString().slice(0, 10),
-                label: `${dayMonth} (${dayOfWeek})`,
-                dateObj: new Date(currentDate),
-                weekday: currentDate.getDay()
-            });
-            currentDate.setDate(currentDate.getDate() + 1);
-        }
-        return dates;
+function generateDates() {
+    const dates = [];
+    const currentDate = new Date(START_DATE);
+    while (currentDate <= END_DATE) {
+        // Формируем дату в локальном формате ГГГГ-ММ-ДД
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const day = String(currentDate.getDate()).padStart(2, '0');
+        const localDateStr = `${year}-${month}-${day}`;
+        
+        const dayOfWeek = currentDate.toLocaleDateString('ru-RU', { weekday: 'short' });
+        const dayMonth = currentDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+        
+        dates.push({
+            fullDate: localDateStr,
+            label: `${dayMonth} (${dayOfWeek})`,
+            dateObj: new Date(currentDate),
+            weekday: currentDate.getDay()
+        });
+        currentDate.setDate(currentDate.getDate() + 1);
     }
+    return dates;
+}
     
     currentDates = generateDates();
     
@@ -351,36 +358,40 @@
         renderTable();
     }
     
-    function deletePastDates() {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const newDates = currentDates.filter(date => new Date(date.fullDate) >= today);
-        if (newDates.length === currentDates.length) {
-            alert('Нет прошедших дат для удаления');
-            return;
-        }
-        if (confirm(`Удалить ${currentDates.length - newDates.length} прошедших дат?`)) {
-            currentDates = newDates;
-            const newAnswers = {};
-            members.forEach(member => {
-                newAnswers[member] = {};
-                currentDates.forEach(date => {
-                    newAnswers[member][date.fullDate] = {};
-                    HOURS.forEach(hour => {
-                        if (answers[member] && answers[member][date.fullDate]) {
-                            newAnswers[member][date.fullDate][hour] = answers[member][date.fullDate][hour] || 'no';
-                        } else {
-                            newAnswers[member][date.fullDate][hour] = 'no';
-                        }
-                    });
+  function deletePastDates() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${year}-${month}-${day}`;
+    
+    const newDates = currentDates.filter(date => date.fullDate >= todayStr);
+    if (newDates.length === currentDates.length) {
+        alert('Нет прошедших дат для удаления');
+        return;
+    }
+    if (confirm(`Удалить ${currentDates.length - newDates.length} прошедших дат?`)) {
+        currentDates = newDates;
+        const newAnswers = {};
+        members.forEach(member => {
+            newAnswers[member] = {};
+            currentDates.forEach(date => {
+                newAnswers[member][date.fullDate] = {};
+                HOURS.forEach(hour => {
+                    if (answers[member] && answers[member][date.fullDate]) {
+                        newAnswers[member][date.fullDate][hour] = answers[member][date.fullDate][hour] || 'no';
+                    } else {
+                        newAnswers[member][date.fullDate][hour] = 'no';
+                    }
                 });
             });
-            answers = newAnswers;
-            saveAndSync();
-            renderTable();
-            alert('Прошедшие даты удалены');
-        }
+        });
+        answers = newAnswers;
+        saveAndSync();
+        renderTable();
+        alert('Прошедшие даты удалены');
     }
+}
     
     function updateAnalytics() {
         if (members.length === 0) {
