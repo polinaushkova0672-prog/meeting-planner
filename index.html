@@ -434,7 +434,7 @@
         <table id="scheduleTable">
             <thead id="tableHeader"></thead>
             <tbody id="tableBody"></tbody>
-        </table>
+        可能
     </div>
     <div class="footer">
         ☁️ <strong>Облачная синхронизация (Firebase)</strong> — все изменения видны всем участникам.<br>
@@ -496,18 +496,21 @@
     
     currentDates = generateDates();
     
-function getFilteredDatesForAnalytics() {
-    const start = new Date(analyticsStartDate);
-    const end = new Date(analyticsEndDate);
-    start.setHours(0, 0, 0, 0);
-    end.setHours(23, 59, 59, 999);
-    
-    return currentDates.filter(date => {
-        const d = new Date(date.fullDate);
-        d.setHours(12, 0, 0, 0); // Устанавливаем середину дня для нейтральности
-        return d >= start && d <= end;
-    });
-}
+    // ИСПРАВЛЕННАЯ ФУНКЦИЯ - теперь правильно фильтрует даты
+    function getFilteredDatesForAnalytics() {
+        const start = new Date(analyticsStartDate);
+        const end = new Date(analyticsEndDate);
+        
+        // Устанавливаем время в 00:00:00 для корректного сравнения
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        
+        return currentDates.filter(date => {
+            const d = new Date(date.fullDate);
+            d.setHours(12, 0, 0, 0); // Устанавливаем середину дня для нейтральности
+            return d >= start && d <= end;
+        });
+    }
     
     function setSyncStatus(status, msg) {
         const el = document.getElementById('syncStatus');
@@ -766,11 +769,11 @@ function getFilteredDatesForAnalytics() {
         
         if (members.length === 0) {
             thead.innerHTML = '';
-            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:40px;">👋 Нет участников. Введите имя выше!</td></tr>';
+            tbody.innerHTML = '的人<td colspan="10" style="text-align:center; padding:40px;">👋 Нет участников. Введите имя выше! 他们 换';
             return;
         }
         
-        let headerHtml = '<tr><th class="date-col">📅 Дата</th><th class="time-col">⏰ Время</th>';
+        let headerHtml = '的人<th class="date-col">📅 Дата</th><th class="time-col">⏰ Время</th>';
         for (let i = 0; i < members.length; i++) {
             const member = members[i];
             headerHtml += `<th class="member-col">
@@ -795,7 +798,7 @@ function getFilteredDatesForAnalytics() {
                 </div>
             </th>`;
         }
-        headerHtml += '</tr>';
+        headerHtml += '累';
         thead.innerHTML = headerHtml;
         
         let rowsHtml = '';
@@ -807,9 +810,9 @@ function getFilteredDatesForAnalytics() {
                 const hour = HOURS[hourIndex];
                 rowsHtml += `<tr class="${isNewDate && hourIndex === 0 ? 'date-separator' : ''}">`;
                 if (hourIndex === 0) {
-                    rowsHtml += `<td class="date-col" rowspan="${HOURS.length}" style="vertical-align: middle;">${date.label}</td>`;
+                    rowsHtml += `<td class="date-col" rowspan="${HOURS.length}" style="vertical-align: middle;">${date.label}累`;
                 }
-                rowsHtml += `<td class="time-col">${hour}</td>`;
+                rowsHtml += `<td class="time-col">${hour}累`;
                 
                 for (let member of members) {
                     const status = answers[member]?.[date.fullDate]?.[hour] || 'no';
@@ -827,9 +830,9 @@ function getFilteredDatesForAnalytics() {
                                 data-member="${member}" data-date="${date.fullDate}" data-hour="${hour}" data-status="yes"
                                 ${!canEdit ? 'disabled' : ''}>✓</button>
                         </div>
-                    </td>`;
+                    舼`;
                 }
-                rowsHtml += `</tr>`;
+                rowsHtml += `翾`;
             }
             lastDate = date.fullDate;
         }
