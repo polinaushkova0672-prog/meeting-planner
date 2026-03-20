@@ -4,364 +4,87 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Планировщик встреч с заказчиком</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-database-compat.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-        }
-        body {
-            background: #eef2f7;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1600px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 24px;
-            padding: 20px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-        }
-        h1 {
-            font-size: 1.6rem;
-            margin: 0 0 8px 0;
-            color: #1e293b;
-        }
-        .instruction {
-            background: #f0f9ff;
-            border-left: 4px solid #3b82f6;
-            padding: 12px 16px;
-            margin: 16px 0;
-            border-radius: 12px;
-            font-size: 0.85rem;
-        }
-        .legend {
-            display: flex;
-            gap: 24px;
-            margin: 16px 0 20px 0;
-            padding: 12px 16px;
-            background: #f8fafc;
-            border-radius: 40px;
-            flex-wrap: wrap;
-        }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
-        }
-        .legend-symbol {
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
+        * { box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+        body { background: #eef2f7; margin: 0; padding: 20px; }
+        .container { max-width: 1600px; margin: 0 auto; background: white; border-radius: 24px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+        h1 { font-size: 1.6rem; margin: 0 0 8px 0; color: #1e293b; }
+        .instruction { background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 12px 16px; margin: 16px 0; border-radius: 12px; font-size: 0.85rem; }
+        .legend { display: flex; gap: 24px; margin: 16px 0 20px 0; padding: 12px 16px; background: #f8fafc; border-radius: 40px; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+        .legend-symbol { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 1.2rem; font-weight: bold; }
         .legend-symbol.no { background: #fee2e2; color: #dc2626; }
         .legend-symbol.maybe { background: #ffedd5; color: #f59e0b; }
         .legend-symbol.yes { background: #d1fae5; color: #10b981; }
-        .sync-status {
-            background: #e6f7e6;
-            padding: 8px 12px;
-            border-radius: 28px;
-            font-size: 0.75rem;
-            margin-left: 12px;
-        }
-        .sync-status.saving {
-            background: #ffedd5;
-            color: #f59e0b;
-        }
-        .toolbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 20px;
-            padding: 12px;
-            background: #f8fafc;
-            border-radius: 16px;
-        }
-        .user-section {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .user-section input {
-            padding: 10px 14px;
-            border: 1px solid #cbd5e1;
-            border-radius: 28px;
-            font-size: 0.9rem;
-            width: 180px;
-        }
-        .user-section button {
-            padding: 10px 20px;
-            background: #3b82f6;
-            color: white;
-            border: none;
-            border-radius: 28px;
-            cursor: pointer;
-            font-weight: 500;
-        }
-        .current-user {
-            background: #e6f7e6;
-            padding: 6px 14px;
-            border-radius: 28px;
-            font-size: 0.85rem;
-            font-weight: 500;
-        }
-        .admin-section {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-        .admin-section input {
-            padding: 8px 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 24px;
-            font-size: 0.85rem;
-            width: 120px;
-        }
-        .admin-section button {
-            padding: 8px 16px;
-            background: #ef4444;
-            color: white;
-            border: none;
-            border-radius: 24px;
-            cursor: pointer;
-        }
-        .admin-panel {
-            background: #fff7ed;
-            border: 1px solid #fed7aa;
-            border-radius: 16px;
-            padding: 12px;
-            margin-bottom: 20px;
-            display: none;
-        }
-        .admin-panel.show {
-            display: block;
-        }
-        .analytics-panel {
-            background: #f1f5f9;
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 20px;
-        }
-        .analytics-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-        .filter-buttons {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .filter-btn {
-            padding: 6px 14px;
-            border: 1px solid #cbd5e1;
-            background: white;
-            border-radius: 24px;
-            cursor: pointer;
-            font-size: 0.8rem;
-        }
-        .filter-btn.active {
-            background: #3b82f6;
-            color: white;
-            border-color: #3b82f6;
-        }
-        .best-slots {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-top: 12px;
-        }
-        .best-slot {
-            background: white;
-            padding: 8px 14px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            border-left: 4px solid #10b981;
-        }
-        .table-wrapper {
-            overflow-x: auto;
-            border-radius: 16px;
-            border: 1px solid #e2e8f0;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.75rem;
-        }
-        th, td {
-            border: 1px solid #e2e8f0;
-            padding: 8px 6px;
-            text-align: center;
-            vertical-align: middle;
-        }
-        th {
-            background: #f1f5f9;
-            font-weight: 600;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-        .date-col {
-            background: #e2e8f0;
-            font-weight: 600;
-            position: sticky;
-            left: 0;
-            z-index: 5;
-            min-width: 110px;
-        }
-        .time-col {
-            background: #f8fafc;
-            font-weight: 600;
-            position: sticky;
-            left: 110px;
-            z-index: 5;
-            min-width: 65px;
-        }
-        .member-col {
-            min-width: 130px;
-        }
-        .member-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-        .member-actions {
-            display: flex;
-            gap: 4px;
-            align-items: center;
-        }
-        .move-up-btn, .move-down-btn {
-            background: #e2e8f0;
-            border: none;
-            border-radius: 12px;
-            padding: 2px 6px;
-            cursor: pointer;
-            font-size: 0.7rem;
-        }
-        .edit-nick-btn {
-            background: #dbeafe;
-            border: none;
-            border-radius: 12px;
-            padding: 2px 6px;
-            cursor: pointer;
-            font-size: 0.7rem;
-        }
-        .delete-member-btn {
-            background: #fee2e2;
-            border: none;
-            border-radius: 12px;
-            padding: 2px 6px;
-            cursor: pointer;
-            font-size: 0.7rem;
-            color: #dc2626;
-        }
-        .my-row {
-            background-color: #e6f7e6 !important;
-        }
-        .date-separator {
-            border-top: 2px solid white;
-            border-bottom: 2px solid white;
-        }
-        .status-buttons {
-            display: flex;
-            gap: 4px;
-            justify-content: center;
-            align-items: center;
-        }
-        .status-btn {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: bold;
-            transition: 0.1s;
-        }
-        .status-btn-no {
-            background: #fee2e2;
-            color: #dc2626;
-        }
-        .status-btn-no.active {
-            background: #dc2626;
-            color: white;
-            box-shadow: 0 0 0 2px white, 0 0 0 3px #dc2626;
-        }
-        .status-btn-maybe {
-            background: #ffedd5;
-            color: #f59e0b;
-        }
-        .status-btn-maybe.active {
-            background: #f59e0b;
-            color: white;
-        }
-        .status-btn-yes {
-            background: #d1fae5;
-            color: #10b981;
-        }
-        .status-btn-yes.active {
-            background: #10b981;
-            color: white;
-        }
-        .status-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-        .footer {
-            margin-top: 20px;
-            font-size: 0.7rem;
-            color: #64748b;
-            text-align: center;
-        }
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #64748b;
-        }
-        @media (max-width: 768px) {
-            .status-btn { width: 26px; height: 26px; font-size: 0.8rem; }
-            .date-col { min-width: 85px; }
-            .time-col { left: 85px; }
-        }
+        .sync-status { background: #e6f7e6; padding: 6px 14px; border-radius: 28px; font-size: 0.75rem; font-weight: 500; }
+        .sync-status.saving { background: #ffedd5; color: #f59e0b; }
+        .sync-status.error { background: #fee2e2; color: #dc2626; }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; padding: 12px; background: #f8fafc; border-radius: 16px; }
+        .user-section { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .user-section input { padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 28px; font-size: 0.9rem; width: 180px; }
+        .user-section button { padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 28px; cursor: pointer; font-weight: 500; }
+        .current-user { background: #e6f7e6; padding: 6px 14px; border-radius: 28px; font-size: 0.85rem; font-weight: 500; }
+        .admin-section { display: flex; gap: 8px; align-items: center; }
+        .admin-section input { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 24px; font-size: 0.85rem; width: 120px; }
+        .admin-section button { padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 24px; cursor: pointer; }
+        .admin-panel { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 16px; padding: 12px; margin-bottom: 20px; display: none; }
+        .admin-panel.show { display: block; }
+        .analytics-panel { background: #f1f5f9; border-radius: 16px; padding: 16px; margin-bottom: 20px; }
+        .analytics-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+        .filter-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+        .filter-btn { padding: 6px 14px; border: 1px solid #cbd5e1; background: white; border-radius: 24px; cursor: pointer; font-size: 0.8rem; }
+        .filter-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+        .best-slots { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+        .best-slot { background: white; padding: 8px 14px; border-radius: 20px; font-size: 0.8rem; border-left: 4px solid #10b981; }
+        .table-wrapper { overflow-x: auto; border-radius: 16px; border: 1px solid #e2e8f0; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+        th, td { border: 1px solid #e2e8f0; padding: 8px 6px; text-align: center; vertical-align: middle; }
+        th { background: #f1f5f9; font-weight: 600; position: sticky; top: 0; z-index: 10; }
+        .date-col { background: #e2e8f0; font-weight: 600; position: sticky; left: 0; z-index: 5; min-width: 110px; }
+        .time-col { background: #f8fafc; font-weight: 600; position: sticky; left: 110px; z-index: 5; min-width: 65px; }
+        .member-col { min-width: 130px; }
+        .member-header { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
+        .member-actions { display: flex; gap: 4px; align-items: center; }
+        .move-up-btn, .move-down-btn { background: #e2e8f0; border: none; border-radius: 12px; padding: 2px 6px; cursor: pointer; font-size: 0.7rem; }
+        .edit-nick-btn { background: #dbeafe; border: none; border-radius: 12px; padding: 2px 6px; cursor: pointer; font-size: 0.7rem; }
+        .delete-member-btn { background: #fee2e2; border: none; border-radius: 12px; padding: 2px 6px; cursor: pointer; font-size: 0.7rem; color: #dc2626; }
+        .my-row { background-color: #e6f7e6 !important; }
+        .date-separator { border-top: 2px solid white; border-bottom: 2px solid white; }
+        .status-buttons { display: flex; gap: 4px; justify-content: center; align-items: center; }
+        .status-btn { width: 30px; height: 30px; border-radius: 50%; border: none; cursor: pointer; font-size: 1rem; font-weight: bold; transition: 0.1s; }
+        .status-btn-no { background: #fee2e2; color: #dc2626; }
+        .status-btn-no.active { background: #dc2626; color: white; box-shadow: 0 0 0 2px white, 0 0 0 3px #dc2626; }
+        .status-btn-maybe { background: #ffedd5; color: #f59e0b; }
+        .status-btn-maybe.active { background: #f59e0b; color: white; }
+        .status-btn-yes { background: #d1fae5; color: #10b981; }
+        .status-btn-yes.active { background: #10b981; color: white; }
+        .status-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .footer { margin-top: 20px; font-size: 0.7rem; color: #64748b; text-align: center; }
+        @media (max-width: 768px) { .status-btn { width: 26px; height: 26px; font-size: 0.8rem; } .date-col { min-width: 85px; } .time-col { left: 85px; } }
     </style>
 </head>
 <body>
 <div class="container">
     <h1>📅 Согласование встреч с заказчиком</h1>
-    
     <div class="instruction">
         <h3>📖 Как пользоваться:</h3>
         <ol>
             <li><strong>Введите ваше имя</strong> → нажмите "Войти / Создать"</li>
             <li><strong>Ваша строка</strong> появится в таблице (зелёный фон) — только её можно редактировать</li>
             <li><strong>Выбирайте статус</strong> в ячейках: ✗ (нет), ? (возможно), ✓ (да)</li>
-            <li><strong>Все изменения сохраняются автоматически</strong> в облаке — все участники видят актуальные данные</li>
+            <li><strong>Все изменения сохраняются в облаке</strong> — все участники видят актуальные данные</li>
         </ol>
     </div>
-
     <div class="legend">
         <div class="legend-item"><div class="legend-symbol no">✗</div> <span>Нет</span></div>
         <div class="legend-item"><div class="legend-symbol maybe">?</div> <span>Возможно</span></div>
         <div class="legend-item"><div class="legend-symbol yes">✓</div> <span>Да</span></div>
         <div class="legend-item"><span>🟢 Зелёный фон = ваша строка</span></div>
-        <div class="legend-item"><span>✏️ Свой ник можно изменить в любой момент</span></div>
-        <div class="legend-item"><span id="syncStatus" class="sync-status">🟢 Синхронизировано</span></div>
+        <div class="legend-item"><span>✏️ Свой ник можно изменить</span></div>
+        <div class="legend-item"><span id="syncStatus" class="sync-status">🟢 Подключение...</span></div>
     </div>
-
     <div class="toolbar">
         <div class="user-section">
             <input type="text" id="userNameInput" placeholder="Ваше имя" maxlength="25">
@@ -373,19 +96,16 @@
             <button id="adminLoginBtn">🔐 Админ</button>
         </div>
     </div>
-
     <div id="adminPanel" class="admin-panel">
         <h4>⚙️ Панель администратора</h4>
         <div style="display: flex; flex-wrap: wrap; gap: 8px;">
             <button id="deletePastDatesBtn" style="background:#ef4444;">🗑️ Удалить прошедшие даты</button>
             <button id="resetAllBtn" style="background:#f59e0b;">🔄 Сбросить все ответы</button>
             <button id="resetAllMembersBtn" style="background:#f59e0b;">👥 Удалить всех участников</button>
-            <button id="clearCloudBtn" style="background:#ef4444;">☁️ Очистить облако</button>
             <button id="exitAdminBtn" style="background:#6b7280;">🚪 Выйти</button>
         </div>
     </div>
-
-    <div class="analytics-panel" id="analyticsPanel">
+    <div class="analytics-panel">
         <div class="analytics-header">
             <strong>📊 Аналитика доступности</strong>
             <div class="filter-buttons" id="filterButtons">
@@ -402,23 +122,35 @@
         <div id="bestSlotsContainer" class="best-slots"></div>
         <div id="dayRecommendation" style="margin-top: 12px; font-size: 0.8rem; color: #475569;"></div>
     </div>
-
     <div class="table-wrapper">
         <table id="scheduleTable">
             <thead id="tableHeader"></thead>
             <tbody id="tableBody"></tbody>
         堆积
     </div>
-    
     <div class="footer">
-        💾 <strong>Автосохранение в облаке</strong> — все изменения видны всем участникам.<br>
-        📅 Даты: с 19 марта по 31 мая 2026.
+        ☁️ <strong>Облачная синхронизация (Firebase)</strong> — все изменения видны всем участникам.<br>
+        📅 Даты: с 19 марта по 31 мая 2026 | 🔑 Пароль админа: 79315
     </div>
 </div>
 
 <script>
-    // === КОНФИГУРАЦИЯ ===
-    const STORAGE_KEY = "meeting_planner_cloud";
+    // ========== 🔥 ВАШИ ДАННЫЕ ИЗ FIREBASE ==========
+    const firebaseConfig = {
+        apiKey: "AIzaSyBovHipqT5lyAPugaR8aR73HFK3paymYMw",
+        authDomain: "meeting-planner-6d39c.firebaseapp.com",
+        projectId: "meeting-planner-6d39c",
+        storageBucket: "meeting-planner-6d39c.firebasestorage.app",
+        messagingSenderId: "1062959175631",
+        appId: "1:1062959175631:web:5b3ef86f23c8b0470524ba",
+        databaseURL: "https://meeting-planner-6d39c-default-rtdb.firebaseio.com/"
+    };
+    // ===============================================
+    
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const dbRef = database.ref('/meetingData');
+    
     const START_DATE = new Date(2026, 2, 19);
     const END_DATE = new Date(2026, 4, 31);
     const HOURS = [];
@@ -429,13 +161,10 @@
     let answers = {};
     let currentUser = null;
     let isAdmin = false;
-    let syncTimeout = null;
-    let isSyncing = false;
+    let isInitialLoad = true;
     const ADMIN_PASSWORD = "79315";
     let currentDayFilter = "all";
-    
     const DAYS_MAP = { 'mon': 1, 'tue': 2, 'wed': 3, 'thu': 4, 'fri': 5, 'sat': 6, 'sun': 0 };
-    const DAYS_RU = { 1: 'ПН', 2: 'ВТ', 3: 'СР', 4: 'ЧТ', 5: 'ПТ', 6: 'СБ', 0: 'ВС' };
     
     function generateDates() {
         const dates = [];
@@ -456,107 +185,63 @@
     
     currentDates = generateDates();
     
-    // Обновить статус синхронизации
-    function setSyncStatus(status, isError = false) {
+    function setSyncStatus(status, msg) {
         const el = document.getElementById('syncStatus');
         if (status === 'saving') {
             el.textContent = '⏳ Сохранение...';
             el.className = 'sync-status saving';
         } else if (status === 'error') {
-            el.textContent = '❌ Ошибка синхронизации';
-            el.className = 'sync-status';
-            setTimeout(() => setSyncStatus('ok'), 3000);
+            el.textContent = msg || '❌ Ошибка';
+            el.className = 'sync-status error';
         } else {
-            el.textContent = '🟢 Синхронизировано';
+            el.textContent = '☁️ Облако ✅';
             el.className = 'sync-status';
         }
     }
     
-    // Сохранить данные в облако (localStorage синхронизируется между устройствами через эту же страницу)
-    // Используем localStorage + событие storage для синхронизации между вкладками
     function saveToCloud() {
-        const data = { members, answers, lastUpdated: new Date().toISOString() };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        setSyncStatus('saving');
-        setTimeout(() => setSyncStatus('ok'), 500);
+        const dataToSave = { members: members, answers: answers, lastUpdated: Date.now() };
+        dbRef.set(dataToSave).catch((error) => { setSyncStatus('error', '❌ Ошибка'); });
     }
     
-    // Загрузить данные из облака
     function loadFromCloud() {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (!stored) {
-            // Если нет данных в облаке, создаем пустые
-            members = [];
-            answers = {};
-            saveToCloud();
-            return;
-        }
-        try {
-            const parsed = JSON.parse(stored);
-            if (parsed.members) members = parsed.members;
-            if (parsed.answers) answers = parsed.answers;
-            
-            // Проверяем структуру
-            members.forEach(member => {
-                if (!answers[member]) answers[member] = {};
-                currentDates.forEach(date => {
-                    if (!answers[member][date.fullDate]) {
-                        answers[member][date.fullDate] = {};
-                    }
-                    HOURS.forEach(hour => {
-                        if (!answers[member][date.fullDate][hour]) {
-                            answers[member][date.fullDate][hour] = 'no';
-                        }
+        dbRef.on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                if (data.members) members = data.members;
+                if (data.answers) answers = data.answers;
+                members.forEach(member => {
+                    if (!answers[member]) answers[member] = {};
+                    currentDates.forEach(date => {
+                        if (!answers[member][date.fullDate]) answers[member][date.fullDate] = {};
+                        HOURS.forEach(hour => {
+                            if (!answers[member][date.fullDate][hour]) answers[member][date.fullDate][hour] = 'no';
+                        });
                     });
                 });
-            });
-        } catch(e) {
-            console.error('Ошибка загрузки', e);
-            members = [];
-            answers = {};
-        }
+                renderTable();
+                updateAnalytics();
+                setSyncStatus('connected');
+            } else if (isInitialLoad) {
+                members = [];
+                answers = {};
+                saveToCloud();
+            }
+            isInitialLoad = false;
+        }, (error) => { setSyncStatus('error', '❌ Ошибка подключения'); });
     }
     
-    // Очистить облако
-    function clearCloud() {
-        if (confirm('Очистить все данные в облаке? Все участники потеряют данные!')) {
-            members = [];
-            answers = {};
-            currentUser = null;
-            saveToCloud();
-            renderTable();
-            updateAnalytics();
-            document.getElementById('currentUserDisplay').style.display = 'none';
-            alert('Облако очищено');
-        }
-    }
-    
-    // Слушаем изменения в localStorage (для синхронизации между вкладками/устройствами)
-    window.addEventListener('storage', (e) => {
-        if (e.key === STORAGE_KEY && !isSyncing) {
-            loadFromCloud();
-            renderTable();
-            updateAnalytics();
-            setSyncStatus('ok');
-        }
-    });
-    
-    function saveToLocalAndCloud() {
-        saveToCloud();
-    }
+    function saveAndSync() { saveToCloud(); }
     
     function loginOrCreate() {
-        const nameInput = document.getElementById('userNameInput');
-        const name = nameInput.value.trim();
+        const name = document.getElementById('userNameInput').value.trim();
         if (!name) { alert('Введите имя'); return; }
-        
         if (members.includes(name)) {
             currentUser = name;
             document.getElementById('currentUserDisplay').textContent = `👤 Вы: ${name}`;
             document.getElementById('currentUserDisplay').style.display = 'inline-block';
             document.getElementById('userNameInput').value = '';
             renderTable();
-            updateAnalytics();
             alert(`Добро пожаловать, ${name}!`);
         } else {
             members.push(name);
@@ -566,22 +251,18 @@
                 HOURS.forEach(hour => { answers[name][date.fullDate][hour] = 'no'; });
             });
             currentUser = name;
-            saveToLocalAndCloud();
+            saveAndSync();
             document.getElementById('currentUserDisplay').textContent = `👤 Вы: ${name}`;
             document.getElementById('currentUserDisplay').style.display = 'inline-block';
             document.getElementById('userNameInput').value = '';
             renderTable();
-            updateAnalytics();
             alert(`Участник "${name}" добавлен!`);
         }
     }
     
     function changeOwnNickname(oldName, newName) {
         if (!members.includes(oldName)) return false;
-        if (members.includes(newName) && newName !== oldName) {
-            alert('Такое имя уже существует!');
-            return false;
-        }
+        if (members.includes(newName) && newName !== oldName) { alert('Такое имя уже есть!'); return false; }
         if (!newName || !newName.trim()) return false;
         const trimmedNew = newName.trim();
         const idx = members.indexOf(oldName);
@@ -589,26 +270,16 @@
         answers[trimmedNew] = answers[oldName];
         delete answers[oldName];
         if (currentUser === oldName) currentUser = trimmedNew;
-        saveToLocalAndCloud();
+        saveAndSync();
         renderTable();
-        updateAnalytics();
-        if (currentUser === trimmedNew) {
-            document.getElementById('currentUserDisplay').textContent = `👤 Вы: ${trimmedNew}`;
-        }
+        if (currentUser === trimmedNew) document.getElementById('currentUserDisplay').textContent = `👤 Вы: ${trimmedNew}`;
         return true;
     }
     
     function moveMember(name, direction) {
         const idx = members.indexOf(name);
-        if (direction === 'up' && idx > 0) {
-            [members[idx-1], members[idx]] = [members[idx], members[idx-1]];
-            saveToLocalAndCloud();
-            renderTable();
-        } else if (direction === 'down' && idx < members.length-1) {
-            [members[idx+1], members[idx]] = [members[idx], members[idx+1]];
-            saveToLocalAndCloud();
-            renderTable();
-        }
+        if (direction === 'up' && idx > 0) { [members[idx-1], members[idx]] = [members[idx], members[idx-1]]; saveAndSync(); renderTable(); }
+        else if (direction === 'down' && idx < members.length-1) { [members[idx+1], members[idx]] = [members[idx], members[idx+1]]; saveAndSync(); renderTable(); }
     }
     
     function deleteMember(name) {
@@ -616,20 +287,15 @@
         if (idx === -1) return;
         members.splice(idx, 1);
         delete answers[name];
-        saveToLocalAndCloud();
-        if (currentUser === name) {
-            currentUser = null;
-            document.getElementById('currentUserDisplay').style.display = 'none';
-        }
+        saveAndSync();
+        if (currentUser === name) { currentUser = null; document.getElementById('currentUserDisplay').style.display = 'none'; }
         renderTable();
-        updateAnalytics();
     }
     
     function setStatus(member, date, hour, status) {
         if (answers[member] && answers[member][date] && answers[member][date][hour]) {
             answers[member][date][hour] = status;
-            saveToLocalAndCloud();
-            updateAnalytics();
+            saveAndSync();
         }
     }
     
@@ -637,16 +303,11 @@
         if (!confirm('Сбросить все ответы?')) return;
         members.forEach(member => {
             currentDates.forEach(date => {
-                HOURS.forEach(hour => {
-                    if (answers[member] && answers[member][date.fullDate]) {
-                        answers[member][date.fullDate][hour] = 'no';
-                    }
-                });
+                HOURS.forEach(hour => { if (answers[member] && answers[member][date.fullDate]) answers[member][date.fullDate][hour] = 'no'; });
             });
         });
-        saveToLocalAndCloud();
+        saveAndSync();
         renderTable();
-        updateAnalytics();
     }
     
     function resetAllMembers() {
@@ -654,22 +315,16 @@
         members = [];
         answers = {};
         currentUser = null;
-        saveToLocalAndCloud();
+        saveAndSync();
         document.getElementById('currentUserDisplay').style.display = 'none';
         renderTable();
-        updateAnalytics();
     }
     
     function deletePastDates() {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const newDates = currentDates.filter(date => new Date(date.fullDate) >= today);
-        
-        if (newDates.length === currentDates.length) {
-            alert('Нет прошедших дат для удаления');
-            return;
-        }
-        
+        if (newDates.length === currentDates.length) { alert('Нет прошедших дат'); return; }
         if (confirm(`Удалить ${currentDates.length - newDates.length} прошедших дат?`)) {
             currentDates = newDates;
             const newAnswers = {};
@@ -678,29 +333,23 @@
                 currentDates.forEach(date => {
                     newAnswers[member][date.fullDate] = {};
                     HOURS.forEach(hour => {
-                        if (answers[member] && answers[member][date.fullDate]) {
-                            newAnswers[member][date.fullDate][hour] = answers[member][date.fullDate][hour] || 'no';
-                        } else {
-                            newAnswers[member][date.fullDate][hour] = 'no';
-                        }
+                        newAnswers[member][date.fullDate][hour] = (answers[member] && answers[member][date.fullDate]) ? answers[member][date.fullDate][hour] || 'no' : 'no';
                     });
                 });
             });
             answers = newAnswers;
-            saveToLocalAndCloud();
+            saveAndSync();
             renderTable();
-            updateAnalytics();
             alert('Прошедшие даты удалены');
         }
     }
     
     function updateAnalytics() {
         if (members.length === 0 || currentDates.length === 0) {
-            document.getElementById('bestSlotsContainer').innerHTML = '<div style="color: gray;">Нет данных для анализа</div>';
+            document.getElementById('bestSlotsContainer').innerHTML = '<div>Нет данных</div>';
             document.getElementById('dayRecommendation').innerHTML = '';
             return;
         }
-        
         let slotStats = [];
         for (let date of currentDates) {
             for (let hour of HOURS) {
@@ -710,68 +359,27 @@
                     if (status === 'yes') yesCount++;
                     if (status === 'maybe') maybeCount++;
                 }
-                slotStats.push({
-                    date: date.label,
-                    hour: hour,
-                    yes: yesCount,
-                    maybe: maybeCount,
-                    total: yesCount + maybeCount,
-                    weekday: date.weekday
-                });
+                slotStats.push({ date: date.label, hour: hour, yes: yesCount, maybe: maybeCount, total: yesCount + maybeCount, weekday: date.weekday });
             }
         }
-        
         let filteredStats = slotStats;
-        if (currentDayFilter !== 'all') {
-            const targetDay = DAYS_MAP[currentDayFilter];
-            filteredStats = slotStats.filter(s => s.weekday === targetDay);
-        }
-        
+        if (currentDayFilter !== 'all') { const targetDay = DAYS_MAP[currentDayFilter]; filteredStats = slotStats.filter(s => s.weekday === targetDay); }
         const topSlots = [...filteredStats].sort((a,b) => b.total - a.total).slice(0, 8);
-        
         let bestHtml = '';
-        for (let slot of topSlots) {
-            bestHtml += `<div class="best-slot">
-                <strong>${slot.date}</strong> ${slot.hour}<br>
-                ✅ ${slot.yes} чел | ❓ ${slot.maybe} чел
-            </div>`;
-        }
-        
+        for (let slot of topSlots) bestHtml += `<div class="best-slot"><strong>${slot.date}</strong> ${slot.hour}<br>✅ ${slot.yes} чел | ❓ ${slot.maybe} чел</div>`;
         document.getElementById('bestSlotsContainer').innerHTML = bestHtml || '<div>Нет данных</div>';
-        
         const dayStats = {};
         for (let d of [0,1,2,3,4,5,6]) dayStats[d] = { total: 0, count: 0 };
-        for (let stat of slotStats) {
-            dayStats[stat.weekday].total += stat.total;
-            dayStats[stat.weekday].count++;
-        }
-        
-        let bestDay = null;
-        let bestDayScore = -1;
-        for (let d of [1,2,3,4,5,6,0]) {
-            if (dayStats[d].count > 0) {
-                const avg = dayStats[d].total / dayStats[d].count;
-                if (avg > bestDayScore) {
-                    bestDayScore = avg;
-                    bestDay = d;
-                }
-            }
-        }
-        
+        for (let stat of slotStats) { dayStats[stat.weekday].total += stat.total; dayStats[stat.weekday].count++; }
+        let bestDay = null, bestDayScore = -1;
+        for (let d of [1,2,3,4,5,6,0]) { if (dayStats[d].count > 0) { const avg = dayStats[d].total / dayStats[d].count; if (avg > bestDayScore) { bestDayScore = avg; bestDay = d; } } }
         const dayNames = { 0: 'воскресенье', 1: 'понедельник', 2: 'вторник', 3: 'среду', 4: 'четверг', 5: 'пятницу', 6: 'субботу' };
-        
-        document.getElementById('dayRecommendation').innerHTML = `
-            💡 <strong>Рекомендация:</strong> самый удобный день — 
-            <strong>${dayNames[bestDay]}</strong> (в среднем ${bestDayScore.toFixed(1)} человек могут/возможно)
-        `;
+        document.getElementById('dayRecommendation').innerHTML = `💡 <strong>Рекомендация:</strong> самый удобный день — <strong>${dayNames[bestDay]}</strong> (в среднем ${bestDayScore.toFixed(1)} человек могут/возможно)`;
     }
     
     function setDayFilter(day) {
         currentDayFilter = day;
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            if (btn.dataset.day === day) btn.classList.add('active');
-            else btn.classList.remove('active');
-        });
+        document.querySelectorAll('.filter-btn').forEach(btn => { if (btn.dataset.day === day) btn.classList.add('active'); else btn.classList.remove('active'); });
         updateAnalytics();
     }
     
@@ -779,178 +387,88 @@
         const thead = document.getElementById('tableHeader');
         const tbody = document.getElementById('tableBody');
         if (!thead || !tbody) return;
-        
-        if (members.length === 0) {
-            thead.innerHTML = '';
-            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:40px;">👋 Нет участников. Введите имя выше!</td></tr>';
-            return;
-        }
-        
-        let headerHtml = '<tr><th class="date-col">📅 Дата</th><th class="time-col">⏰ Время</th>';
+        if (members.length === 0) { thead.innerHTML = ''; tbody.innerHTML = '的人<td colspan="10" style="text-align:center; padding:40px;">👋 Нет участников. Введите имя выше! 他们 换'; return; }
+        let headerHtml = '的人<th class="date-col">📅 Дата</th><th class="time-col">⏰ Время</th>';
         for (let i = 0; i < members.length; i++) {
             const member = members[i];
-            headerHtml += `<th class="member-col">
-                <div class="member-header">
-                    <span>${escapeHtml(member)}</span>
-                    <div class="member-actions">`;
-            
-            if (isAdmin) {
-                headerHtml += `<button class="move-up-btn" data-member="${member}" title="Вверх">▲</button>
-                               <button class="move-down-btn" data-member="${member}" title="Вниз">▼</button>`;
-            }
-            
-            if (currentUser === member || isAdmin) {
-                headerHtml += `<button class="edit-nick-btn" data-member="${member}" title="Изменить имя">✏️</button>`;
-            }
-            
-            if (isAdmin) {
-                headerHtml += `<button class="delete-member-btn" data-member="${member}" title="Удалить">🗑️</button>`;
-            }
-            
-            headerHtml += `</div>
-                </div>
-            </th>`;
+            headerHtml += `<th class="member-col"><div class="member-header"><span>${escapeHtml(member)}</span><div class="member-actions">`;
+            if (isAdmin) headerHtml += `<button class="move-up-btn" data-member="${member}" title="Вверх">▲</button><button class="move-down-btn" data-member="${member}" title="Вниз">▼</button>`;
+            if (currentUser === member || isAdmin) headerHtml += `<button class="edit-nick-btn" data-member="${member}" title="Изменить имя">✏️</button>`;
+            if (isAdmin) headerHtml += `<button class="delete-member-btn" data-member="${member}" title="Удалить">🗑️</button>`;
+            headerHtml += `</div></div></th>`;
         }
-        headerHtml += '</tr>';
+        headerHtml += '觼';
         thead.innerHTML = headerHtml;
-        
-        let rowsHtml = '';
-        let lastDate = null;
-        
+        let rowsHtml = '', lastDate = null;
         for (let date of currentDates) {
             const isNewDate = lastDate !== date.fullDate;
             for (let hourIndex = 0; hourIndex < HOURS.length; hourIndex++) {
                 const hour = HOURS[hourIndex];
                 rowsHtml += `<tr class="${isNewDate && hourIndex === 0 ? 'date-separator' : ''}">`;
-                if (hourIndex === 0) {
-                    rowsHtml += `<td class="date-col" rowspan="${HOURS.length}" style="vertical-align: middle;">${date.label}</td>`;
-                }
-                rowsHtml += `<td class="time-col">${hour}</td>`;
-                
+                if (hourIndex === 0) rowsHtml += `<td class="date-col" rowspan="${HOURS.length}" style="vertical-align: middle;">${date.label}觼`;
+                rowsHtml += `<td class="time-col">${hour}觼`;
                 for (let member of members) {
                     const status = answers[member]?.[date.fullDate]?.[hour] || 'no';
                     const isMyRow = (currentUser === member);
                     const canEdit = isMyRow || isAdmin;
-                    const isActiveNo = status === 'no';
-                    const isActiveMaybe = status === 'maybe';
-                    const isActiveYes = status === 'yes';
-                    
-                    rowsHtml += `<td class="${isMyRow ? 'my-row' : ''}" style="padding: 4px;">
-                        <div class="status-buttons">
-                            <button class="status-btn status-btn-no ${isActiveNo ? 'active' : ''}" 
-                                data-member="${member}" data-date="${date.fullDate}" data-hour="${hour}" data-status="no"
-                                ${!canEdit ? 'disabled' : ''}>✗</button>
-                            <button class="status-btn status-btn-maybe ${isActiveMaybe ? 'active' : ''}" 
-                                data-member="${member}" data-date="${date.fullDate}" data-hour="${hour}" data-status="maybe"
-                                ${!canEdit ? 'disabled' : ''}>?</button>
-                            <button class="status-btn status-btn-yes ${isActiveYes ? 'active' : ''}" 
-                                data-member="${member}" data-date="${date.fullDate}" data-hour="${hour}" data-status="yes"
-                                ${!canEdit ? 'disabled' : ''}>✓</button>
-                        </div>
-                      </td>`;
+                    rowsHtml += `<td class="${isMyRow ? 'my-row' : ''}" style="padding: 4px;"><div class="status-buttons">
+                        <button class="status-btn status-btn-no ${status === 'no' ? 'active' : ''}" data-member="${member}" data-date="${date.fullDate}" data-hour="${hour}" data-status="no" ${!canEdit ? 'disabled' : ''}>✗</button>
+                        <button class="status-btn status-btn-maybe ${status === 'maybe' ? 'active' : ''}" data-member="${member}" data-date="${date.fullDate}" data-hour="${hour}" data-status="maybe" ${!canEdit ? 'disabled' : ''}>?</button>
+                        <button class="status-btn status-btn-yes ${status === 'yes' ? 'active' : ''}" data-member="${member}" data-date="${date.fullDate}" data-hour="${hour}" data-status="yes" ${!canEdit ? 'disabled' : ''}>✓</button>
+                    </div>舼`;
                 }
-                rowsHtml += `</tr>`;
+                rowsHtml += `翾`;
             }
             lastDate = date.fullDate;
         }
-        
         tbody.innerHTML = rowsHtml;
         attachEventHandlers();
     }
     
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
-    }
+    function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
     
     function attachEventHandlers() {
         document.querySelectorAll('.status-btn').forEach(btn => {
             btn.onclick = () => {
-                const member = btn.dataset.member;
-                const date = btn.dataset.date;
-                const hour = btn.dataset.hour;
-                const status = btn.dataset.status;
-                if (!isAdmin && member !== currentUser) {
-                    alert('❌ Вы можете редактировать только свою строку!');
-                    return;
-                }
+                const member = btn.dataset.member, date = btn.dataset.date, hour = btn.dataset.hour, status = btn.dataset.status;
+                if (!isAdmin && member !== currentUser) { alert('❌ Вы можете редактировать только свою строку!'); return; }
                 setStatus(member, date, hour, status);
                 renderTable();
             };
         });
-        
-        document.querySelectorAll('.move-up-btn').forEach(btn => {
-            btn.onclick = () => { if (isAdmin) moveMember(btn.dataset.member, 'up'); };
-        });
-        document.querySelectorAll('.move-down-btn').forEach(btn => {
-            btn.onclick = () => { if (isAdmin) moveMember(btn.dataset.member, 'down'); };
-        });
-        
+        document.querySelectorAll('.move-up-btn').forEach(btn => { btn.onclick = () => { if (isAdmin) moveMember(btn.dataset.member, 'up'); }; });
+        document.querySelectorAll('.move-down-btn').forEach(btn => { btn.onclick = () => { if (isAdmin) moveMember(btn.dataset.member, 'down'); }; });
         document.querySelectorAll('.edit-nick-btn').forEach(btn => {
             btn.onclick = () => {
                 const member = btn.dataset.member;
-                if (member !== currentUser && !isAdmin) {
-                    alert('Вы можете изменить только своё имя!');
-                    return;
-                }
+                if (member !== currentUser && !isAdmin) { alert('Вы можете изменить только своё имя!'); return; }
                 const newName = prompt('Введите новое имя:', member);
-                if (newName && newName.trim() && newName.trim() !== member) {
-                    changeOwnNickname(member, newName.trim());
-                }
+                if (newName && newName.trim() && newName.trim() !== member) changeOwnNickname(member, newName.trim());
             };
         });
-        
-        document.querySelectorAll('.delete-member-btn').forEach(btn => {
-            btn.onclick = () => {
-                if (!isAdmin) return;
-                if (confirm(`Удалить участника "${btn.dataset.member}"?`)) {
-                    deleteMember(btn.dataset.member);
-                }
-            };
-        });
+        document.querySelectorAll('.delete-member-btn').forEach(btn => { btn.onclick = () => { if (isAdmin && confirm(`Удалить "${btn.dataset.member}"?`)) deleteMember(btn.dataset.member); }; });
     }
     
     function adminLogin() {
         const pwd = document.getElementById('adminPassword').value;
-        if (pwd === ADMIN_PASSWORD) {
-            isAdmin = true;
-            document.getElementById('adminPanel').classList.add('show');
-            alert('✅ Режим админа активирован');
-            renderTable();
-        } else {
-            alert('❌ Неверный пароль');
-        }
+        if (pwd === ADMIN_PASSWORD) { isAdmin = true; document.getElementById('adminPanel').classList.add('show'); alert('✅ Режим админа'); renderTable(); }
+        else alert('❌ Неверный пароль');
         document.getElementById('adminPassword').value = '';
     }
     
-    function exitAdmin() {
-        isAdmin = false;
-        document.getElementById('adminPanel').classList.remove('show');
-        renderTable();
-    }
+    function exitAdmin() { isAdmin = false; document.getElementById('adminPanel').classList.remove('show'); renderTable(); }
     
     function init() {
         loadFromCloud();
-        renderTable();
-        updateAnalytics();
-        
         document.getElementById('loginBtn').onclick = loginOrCreate;
         document.getElementById('adminLoginBtn').onclick = adminLogin;
         document.getElementById('exitAdminBtn').onclick = exitAdmin;
         document.getElementById('resetAllBtn').onclick = resetAllAnswers;
         document.getElementById('resetAllMembersBtn').onclick = resetAllMembers;
         document.getElementById('deletePastDatesBtn').onclick = deletePastDates;
-        document.getElementById('clearCloudBtn').onclick = clearCloud;
-        
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.onclick = () => setDayFilter(btn.dataset.day);
-        });
-        
-        document.getElementById('userNameInput').addEventListener('keypress', e => {
-            if (e.key === 'Enter') loginOrCreate();
-        });
+        document.querySelectorAll('.filter-btn').forEach(btn => { btn.onclick = () => setDayFilter(btn.dataset.day); });
+        document.getElementById('userNameInput').addEventListener('keypress', e => { if (e.key === 'Enter') loginOrCreate(); });
     }
-    
     init();
 </script>
 </body>
