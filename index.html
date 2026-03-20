@@ -496,14 +496,18 @@
     
     currentDates = generateDates();
     
-    function getFilteredDatesForAnalytics() {
-        const start = new Date(analyticsStartDate);
-        const end = new Date(analyticsEndDate);
-        return currentDates.filter(date => {
-            const d = new Date(date.fullDate);
-            return d >= start && d <= end;
-        });
-    }
+function getFilteredDatesForAnalytics() {
+    const start = new Date(analyticsStartDate);
+    const end = new Date(analyticsEndDate);
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+    
+    return currentDates.filter(date => {
+        const d = new Date(date.fullDate);
+        d.setHours(12, 0, 0, 0); // Устанавливаем середину дня для нейтральности
+        return d >= start && d <= end;
+    });
+}
     
     function setSyncStatus(status, msg) {
         const el = document.getElementById('syncStatus');
