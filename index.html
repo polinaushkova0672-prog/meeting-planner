@@ -7,364 +7,65 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-database-compat.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-        }
-        body {
-            background: #eef2f7;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1600px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 24px;
-            padding: 20px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-        }
-        h1 {
-            font-size: 1.6rem;
-            margin: 0 0 8px 0;
-            color: #1e293b;
-        }
-        .instruction {
-            background: #f0f9ff;
-            border-left: 4px solid #3b82f6;
-            padding: 12px 16px;
-            margin: 16px 0;
-            border-radius: 12px;
-            font-size: 0.85rem;
-        }
-        .legend {
-            display: flex;
-            gap: 24px;
-            margin: 16px 0 20px 0;
-            padding: 12px 16px;
-            background: #f8fafc;
-            border-radius: 40px;
-            flex-wrap: wrap;
-        }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
-        }
-        .legend-symbol {
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
+        * { box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+        body { background: #eef2f7; margin: 0; padding: 20px; }
+        .container { max-width: 1600px; margin: 0 auto; background: white; border-radius: 24px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+        h1 { font-size: 1.6rem; margin: 0 0 8px 0; color: #1e293b; }
+        .instruction { background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 12px 16px; margin: 16px 0; border-radius: 12px; font-size: 0.85rem; }
+        .legend { display: flex; gap: 24px; margin: 16px 0 20px 0; padding: 12px 16px; background: #f8fafc; border-radius: 40px; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+        .legend-symbol { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 1.2rem; font-weight: bold; }
         .legend-symbol.no { background: #fee2e2; color: #dc2626; }
         .legend-symbol.maybe { background: #ffedd5; color: #f59e0b; }
         .legend-symbol.yes { background: #d1fae5; color: #10b981; }
-        .sync-status {
-            background: #e6f7e6;
-            padding: 6px 14px;
-            border-radius: 28px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-        .sync-status.saving {
-            background: #ffedd5;
-            color: #f59e0b;
-        }
-        .sync-status.error {
-            background: #fee2e2;
-            color: #dc2626;
-        }
-        .toolbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 20px;
-            padding: 12px;
-            background: #f8fafc;
-            border-radius: 16px;
-        }
-        .user-section {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .user-section input {
-            padding: 10px 14px;
-            border: 1px solid #cbd5e1;
-            border-radius: 28px;
-            font-size: 0.9rem;
-            width: 180px;
-        }
-        .user-section button {
-            padding: 10px 20px;
-            background: #3b82f6;
-            color: white;
-            border: none;
-            border-radius: 28px;
-            cursor: pointer;
-            font-weight: 500;
-        }
-        .current-user {
-            background: #e6f7e6;
-            padding: 6px 14px;
-            border-radius: 28px;
-            font-size: 0.85rem;
-            font-weight: 500;
-        }
-        .admin-section {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-        .admin-section input {
-            padding: 8px 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 24px;
-            font-size: 0.85rem;
-            width: 120px;
-        }
-        .admin-section button {
-            padding: 8px 16px;
-            background: #ef4444;
-            color: white;
-            border: none;
-            border-radius: 24px;
-            cursor: pointer;
-        }
-        .admin-panel {
-            background: #fff7ed;
-            border: 1px solid #fed7aa;
-            border-radius: 16px;
-            padding: 12px;
-            margin-bottom: 20px;
-            display: none;
-        }
-        .admin-panel.show {
-            display: block;
-        }
-        .analytics-panel {
-            background: #f1f5f9;
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 20px;
-        }
-        .analytics-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-        .date-range-selector {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            flex-wrap: wrap;
-            background: white;
-            padding: 6px 12px;
-            border-radius: 28px;
-        }
-        .date-range-selector input {
-            padding: 5px 8px;
-            border: 1px solid #cbd5e1;
-            border-radius: 20px;
-            font-size: 0.75rem;
-        }
-        .date-range-selector button {
-            padding: 5px 12px;
-            background: #3b82f6;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.7rem;
-        }
-        .filter-buttons {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .filter-btn {
-            padding: 6px 14px;
-            border: 1px solid #cbd5e1;
-            background: white;
-            border-radius: 24px;
-            cursor: pointer;
-            font-size: 0.8rem;
-        }
-        .filter-btn.active {
-            background: #3b82f6;
-            color: white;
-            border-color: #3b82f6;
-        }
-        .best-slots {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-top: 12px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        .best-slot {
-            background: white;
-            padding: 8px 14px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            border-left: 4px solid #10b981;
-            min-width: 180px;
-        }
-        .table-wrapper {
-            overflow-x: auto;
-            border-radius: 16px;
-            border: 1px solid #e2e8f0;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.75rem;
-        }
-        th, td {
-            border: 1px solid #e2e8f0;
-            padding: 8px 6px;
-            text-align: center;
-            vertical-align: middle;
-        }
-        th {
-            background: #f1f5f9;
-            font-weight: 600;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-        .date-col {
-            background: #e2e8f0;
-            font-weight: 600;
-            position: sticky;
-            left: 0;
-            z-index: 5;
-            min-width: 110px;
-        }
-        .time-col {
-            background: #f8fafc;
-            font-weight: 600;
-            position: sticky;
-            left: 110px;
-            z-index: 5;
-            min-width: 65px;
-        }
-        .member-col {
-            min-width: 130px;
-        }
-        .member-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-        .member-actions {
-            display: flex;
-            gap: 4px;
-            align-items: center;
-        }
-        .move-up-btn, .move-down-btn {
-            background: #e2e8f0;
-            border: none;
-            border-radius: 12px;
-            padding: 2px 6px;
-            cursor: pointer;
-            font-size: 0.7rem;
-        }
-        .edit-nick-btn {
-            background: #dbeafe;
-            border: none;
-            border-radius: 12px;
-            padding: 2px 6px;
-            cursor: pointer;
-            font-size: 0.7rem;
-        }
-        .delete-member-btn {
-            background: #fee2e2;
-            border: none;
-            border-radius: 12px;
-            padding: 2px 6px;
-            cursor: pointer;
-            font-size: 0.7rem;
-            color: #dc2626;
-        }
-        .my-row {
-            background-color: #e6f7e6 !important;
-        }
-        .date-separator {
-            border-top: 2px solid white;
-            border-bottom: 2px solid white;
-        }
-        .status-buttons {
-            display: flex;
-            gap: 4px;
-            justify-content: center;
-            align-items: center;
-        }
-        .status-btn {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: bold;
-            transition: 0.1s;
-        }
-        .status-btn-no {
-            background: #fee2e2;
-            color: #dc2626;
-        }
-        .status-btn-no.active {
-            background: #dc2626;
-            color: white;
-            box-shadow: 0 0 0 2px white, 0 0 0 3px #dc2626;
-        }
-        .status-btn-maybe {
-            background: #ffedd5;
-            color: #f59e0b;
-        }
-        .status-btn-maybe.active {
-            background: #f59e0b;
-            color: white;
-        }
-        .status-btn-yes {
-            background: #d1fae5;
-            color: #10b981;
-        }
-        .status-btn-yes.active {
-            background: #10b981;
-            color: white;
-        }
-        .status-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-        .footer {
-            margin-top: 20px;
-            font-size: 0.7rem;
-            color: #64748b;
-            text-align: center;
-        }
-        @media (max-width: 768px) {
-            .status-btn { width: 26px; height: 26px; font-size: 0.8rem; }
-            .date-col { min-width: 85px; }
-            .time-col { left: 85px; }
-        }
+        .sync-status { background: #e6f7e6; padding: 6px 14px; border-radius: 28px; font-size: 0.75rem; font-weight: 500; }
+        .sync-status.saving { background: #ffedd5; color: #f59e0b; }
+        .sync-status.error { background: #fee2e2; color: #dc2626; }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; padding: 12px; background: #f8fafc; border-radius: 16px; }
+        .user-section { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .user-section input { padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 28px; font-size: 0.9rem; width: 180px; }
+        .user-section button { padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 28px; cursor: pointer; font-weight: 500; }
+        .current-user { background: #e6f7e6; padding: 6px 14px; border-radius: 28px; font-size: 0.85rem; font-weight: 500; }
+        .admin-section { display: flex; gap: 8px; align-items: center; }
+        .admin-section input { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 24px; font-size: 0.85rem; width: 120px; }
+        .admin-section button { padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 24px; cursor: pointer; }
+        .admin-panel { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 16px; padding: 12px; margin-bottom: 20px; display: none; }
+        .admin-panel.show { display: block; }
+        .analytics-panel { background: #f1f5f9; border-radius: 16px; padding: 16px; margin-bottom: 20px; }
+        .analytics-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+        .date-range-selector { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; background: white; padding: 6px 12px; border-radius: 28px; }
+        .date-range-selector input { padding: 5px 8px; border: 1px solid #cbd5e1; border-radius: 20px; font-size: 0.75rem; }
+        .date-range-selector button { padding: 5px 12px; background: #3b82f6; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 0.7rem; }
+        .filter-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+        .filter-btn { padding: 6px 14px; border: 1px solid #cbd5e1; background: white; border-radius: 24px; cursor: pointer; font-size: 0.8rem; }
+        .filter-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+        .best-slots { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; max-height: 200px; overflow-y: auto; }
+        .best-slot { background: white; padding: 8px 14px; border-radius: 20px; font-size: 0.8rem; border-left: 4px solid #10b981; min-width: 180px; }
+        .table-wrapper { overflow-x: auto; border-radius: 16px; border: 1px solid #e2e8f0; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+        th, td { border: 1px solid #e2e8f0; padding: 8px 6px; text-align: center; vertical-align: middle; }
+        th { background: #f1f5f9; font-weight: 600; position: sticky; top: 0; z-index: 10; }
+        .date-col { background: #e2e8f0; font-weight: 600; position: sticky; left: 0; z-index: 5; min-width: 110px; }
+        .time-col { background: #f8fafc; font-weight: 600; position: sticky; left: 110px; z-index: 5; min-width: 65px; }
+        .member-col { min-width: 130px; }
+        .member-header { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
+        .member-actions { display: flex; gap: 4px; align-items: center; }
+        .move-up-btn, .move-down-btn { background: #e2e8f0; border: none; border-radius: 12px; padding: 2px 6px; cursor: pointer; font-size: 0.7rem; }
+        .edit-nick-btn { background: #dbeafe; border: none; border-radius: 12px; padding: 2px 6px; cursor: pointer; font-size: 0.7rem; }
+        .delete-member-btn { background: #fee2e2; border: none; border-radius: 12px; padding: 2px 6px; cursor: pointer; font-size: 0.7rem; color: #dc2626; }
+        .my-row { background-color: #e6f7e6 !important; }
+        .date-separator { border-top: 2px solid white; border-bottom: 2px solid white; }
+        .status-buttons { display: flex; gap: 4px; justify-content: center; align-items: center; }
+        .status-btn { width: 30px; height: 30px; border-radius: 50%; border: none; cursor: pointer; font-size: 1rem; font-weight: bold; transition: 0.1s; }
+        .status-btn-no { background: #fee2e2; color: #dc2626; }
+        .status-btn-no.active { background: #dc2626; color: white; box-shadow: 0 0 0 2px white, 0 0 0 3px #dc2626; }
+        .status-btn-maybe { background: #ffedd5; color: #f59e0b; }
+        .status-btn-maybe.active { background: #f59e0b; color: white; }
+        .status-btn-yes { background: #d1fae5; color: #10b981; }
+        .status-btn-yes.active { background: #10b981; color: white; }
+        .status-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .footer { margin-top: 20px; font-size: 0.7rem; color: #64748b; text-align: center; }
+        @media (max-width: 768px) { .status-btn { width: 26px; height: 26px; font-size: 0.8rem; } .date-col { min-width: 85px; } .time-col { left: 85px; } }
     </style>
 </head>
 <body>
@@ -434,7 +135,7 @@
         <table id="scheduleTable">
             <thead id="tableHeader"></thead>
             <tbody id="tableBody"></tbody>
-        可能
+        </table>
     </div>
     <div class="footer">
         ☁️ <strong>Облачная синхронизация (Firebase)</strong> — все изменения видны всем участникам.<br>
@@ -443,7 +144,6 @@
 </div>
 
 <script>
-    // ========== 🔥 ВАШИ ДАННЫЕ ИЗ FIREBASE ==========
     const firebaseConfig = {
         apiKey: "AIzaSyBovHipqT5lyAPugaR8aR73HFK3paymYMw",
         authDomain: "meeting-planner-6d39c.firebaseapp.com",
@@ -453,7 +153,6 @@
         appId: "1:1062959175631:web:5b3ef86f23c8b0470524ba",
         databaseURL: "https://meeting-planner-6d39c-default-rtdb.firebaseio.com/"
     };
-    // ===============================================
     
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
@@ -496,29 +195,24 @@
     
     currentDates = generateDates();
     
-    // ИСПРАВЛЕННАЯ ФУНКЦИЯ - теперь правильно фильтрует даты
     function getFilteredDatesForAnalytics() {
         const start = new Date(analyticsStartDate);
         const end = new Date(analyticsEndDate);
-        
-        // Устанавливаем время в 00:00:00 для корректного сравнения
         start.setHours(0, 0, 0, 0);
         end.setHours(23, 59, 59, 999);
-        
         return currentDates.filter(date => {
             const d = new Date(date.fullDate);
-            d.setHours(12, 0, 0, 0); // Устанавливаем середину дня для нейтральности
             return d >= start && d <= end;
         });
     }
     
-    function setSyncStatus(status, msg) {
+    function setSyncStatus(status) {
         const el = document.getElementById('syncStatus');
         if (status === 'saving') {
             el.textContent = '⏳ Сохранение...';
             el.className = 'sync-status saving';
         } else if (status === 'error') {
-            el.textContent = msg || '❌ Ошибка';
+            el.textContent = '❌ Ошибка';
             el.className = 'sync-status error';
         } else {
             el.textContent = '☁️ Облако ✅';
@@ -527,8 +221,8 @@
     }
     
     function saveToCloud() {
-        const dataToSave = { members: members, answers: answers, lastUpdated: Date.now() };
-        dbRef.set(dataToSave).catch((error) => { setSyncStatus('error', '❌ Ошибка'); });
+        const dataToSave = { members, answers, lastUpdated: Date.now() };
+        dbRef.set(dataToSave).catch(() => setSyncStatus('error'));
     }
     
     function loadFromCloud() {
@@ -555,7 +249,7 @@
                 saveToCloud();
             }
             isInitialLoad = false;
-        }, (error) => { setSyncStatus('error', '❌ Ошибка подключения'); });
+        }, () => setSyncStatus('error'));
     }
     
     function saveAndSync() { saveToCloud(); }
@@ -769,11 +463,11 @@
         
         if (members.length === 0) {
             thead.innerHTML = '';
-            tbody.innerHTML = '的人<td colspan="10" style="text-align:center; padding:40px;">👋 Нет участников. Введите имя выше! 他们 换';
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:40px;">👋 Нет участников. Введите имя выше!</td></tr>';
             return;
         }
         
-        let headerHtml = '的人<th class="date-col">📅 Дата</th><th class="time-col">⏰ Время</th>';
+        let headerHtml = '<tr><th class="date-col">📅 Дата</th><th class="time-col">⏰ Время</th>';
         for (let i = 0; i < members.length; i++) {
             const member = members[i];
             headerHtml += `<th class="member-col">
@@ -798,7 +492,7 @@
                 </div>
             </th>`;
         }
-        headerHtml += '累';
+        headerHtml += '</tr>';
         thead.innerHTML = headerHtml;
         
         let rowsHtml = '';
@@ -810,9 +504,9 @@
                 const hour = HOURS[hourIndex];
                 rowsHtml += `<tr class="${isNewDate && hourIndex === 0 ? 'date-separator' : ''}">`;
                 if (hourIndex === 0) {
-                    rowsHtml += `<td class="date-col" rowspan="${HOURS.length}" style="vertical-align: middle;">${date.label}累`;
+                    rowsHtml += `<td class="date-col" rowspan="${HOURS.length}" style="vertical-align: middle;">${date.label}</td>`;
                 }
-                rowsHtml += `<td class="time-col">${hour}累`;
+                rowsHtml += `<td class="time-col">${hour}</td>`;
                 
                 for (let member of members) {
                     const status = answers[member]?.[date.fullDate]?.[hour] || 'no';
@@ -830,9 +524,9 @@
                                 data-member="${member}" data-date="${date.fullDate}" data-hour="${hour}" data-status="yes"
                                 ${!canEdit ? 'disabled' : ''}>✓</button>
                         </div>
-                    舼`;
+                    </td>`;
                 }
-                rowsHtml += `翾`;
+                rowsHtml += `</tr>`;
             }
             lastDate = date.fullDate;
         }
