@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Планировщик встреч с заказчиком</title>
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-database-compat.js"></script>
     <style>
@@ -135,15 +136,16 @@
         <table id="scheduleTable">
             <thead id="tableHeader"></thead>
             <tbody id="tableBody"></tbody>
-        </table>
+        可能
     </div>
     <div class="footer">
         ☁️ <strong>Облачная синхронизация (Firebase)</strong> — все изменения видны всем участникам.<br>
-        📅 Даты: с 19 марта по 31 мая 2026 
+        📅 Даты: с 19 марта по 31 мая 2026 | 🔑 Пароль админа: 79315
     </div>
 </div>
 
 <script>
+    // Firebase конфигурация (ключ защищен ограничениями)
     const firebaseConfig = {
         apiKey: "AIzaSyBovHipqT5lyAPugaR8aR73HFK3paymYMw",
         authDomain: "meeting-planner-6d39c.firebaseapp.com",
@@ -176,38 +178,36 @@
     
     const DAYS_MAP = { 'mon': 1, 'tue': 2, 'wed': 3, 'thu': 4, 'fri': 5, 'sat': 6, 'sun': 0 };
     
-function generateDates() {
-    const dates = [];
-    const currentDate = new Date(START_DATE);
-    while (currentDate <= END_DATE) {
-        // Формируем дату в локальном формате ГГГГ-ММ-ДД
-        const year = currentDate.getFullYear();
-        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-        const day = String(currentDate.getDate()).padStart(2, '0');
-        const localDateStr = `${year}-${month}-${day}`;
-        
-        const dayOfWeek = currentDate.toLocaleDateString('ru-RU', { weekday: 'short' });
-        const dayMonth = currentDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
-        
-        dates.push({
-            fullDate: localDateStr,
-            label: `${dayMonth} (${dayOfWeek})`,
-            dateObj: new Date(currentDate),
-            weekday: currentDate.getDay()
-        });
-        currentDate.setDate(currentDate.getDate() + 1);
+    function generateDates() {
+        const dates = [];
+        const currentDate = new Date(START_DATE);
+        while (currentDate <= END_DATE) {
+            const year = currentDate.getFullYear();
+            const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+            const day = String(currentDate.getDate()).padStart(2, '0');
+            const localDateStr = `${year}-${month}-${day}`;
+            
+            const dayOfWeek = currentDate.toLocaleDateString('ru-RU', { weekday: 'short' });
+            const dayMonth = currentDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+            
+            dates.push({
+                fullDate: localDateStr,
+                label: `${dayMonth} (${dayOfWeek})`,
+                dateObj: new Date(currentDate),
+                weekday: currentDate.getDay()
+            });
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+        return dates;
     }
-    return dates;
-}
     
     currentDates = generateDates();
     
- function getFilteredDatesForAnalytics() {
-    // Простое сравнение строк в формате ГГГГ-ММ-ДД
-    return currentDates.filter(date => {
-        return date.fullDate >= analyticsStartDate && date.fullDate <= analyticsEndDate;
-    });
-}
+    function getFilteredDatesForAnalytics() {
+        return currentDates.filter(date => {
+            return date.fullDate >= analyticsStartDate && date.fullDate <= analyticsEndDate;
+        });
+    }
     
     function setSyncStatus(status) {
         const el = document.getElementById('syncStatus');
@@ -358,40 +358,40 @@ function generateDates() {
         renderTable();
     }
     
-  function deletePastDates() {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    const todayStr = `${year}-${month}-${day}`;
-    
-    const newDates = currentDates.filter(date => date.fullDate >= todayStr);
-    if (newDates.length === currentDates.length) {
-        alert('Нет прошедших дат для удаления');
-        return;
-    }
-    if (confirm(`Удалить ${currentDates.length - newDates.length} прошедших дат?`)) {
-        currentDates = newDates;
-        const newAnswers = {};
-        members.forEach(member => {
-            newAnswers[member] = {};
-            currentDates.forEach(date => {
-                newAnswers[member][date.fullDate] = {};
-                HOURS.forEach(hour => {
-                    if (answers[member] && answers[member][date.fullDate]) {
-                        newAnswers[member][date.fullDate][hour] = answers[member][date.fullDate][hour] || 'no';
-                    } else {
-                        newAnswers[member][date.fullDate][hour] = 'no';
-                    }
+    function deletePastDates() {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const todayStr = `${year}-${month}-${day}`;
+        
+        const newDates = currentDates.filter(date => date.fullDate >= todayStr);
+        if (newDates.length === currentDates.length) {
+            alert('Нет прошедших дат для удаления');
+            return;
+        }
+        if (confirm(`Удалить ${currentDates.length - newDates.length} прошедших дат?`)) {
+            currentDates = newDates;
+            const newAnswers = {};
+            members.forEach(member => {
+                newAnswers[member] = {};
+                currentDates.forEach(date => {
+                    newAnswers[member][date.fullDate] = {};
+                    HOURS.forEach(hour => {
+                        if (answers[member] && answers[member][date.fullDate]) {
+                            newAnswers[member][date.fullDate][hour] = answers[member][date.fullDate][hour] || 'no';
+                        } else {
+                            newAnswers[member][date.fullDate][hour] = 'no';
+                        }
+                    });
                 });
             });
-        });
-        answers = newAnswers;
-        saveAndSync();
-        renderTable();
-        alert('Прошедшие даты удалены');
+            answers = newAnswers;
+            saveAndSync();
+            renderTable();
+            alert('Прошедшие даты удалены');
+        }
     }
-}
     
     function updateAnalytics() {
         if (members.length === 0) {
@@ -470,11 +470,11 @@ function generateDates() {
         
         if (members.length === 0) {
             thead.innerHTML = '';
-            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:40px;">👋 Нет участников. Введите имя выше!</td></tr>';
+            tbody.innerHTML = '的人<td colspan="10" style="text-align:center; padding:40px;">👋 Нет участников. Введите имя выше! 他们 换';
             return;
         }
         
-        let headerHtml = '<tr><th class="date-col">📅 Дата</th><th class="time-col">⏰ Время</th>';
+        let headerHtml = '的人<th class="date-col">📅 Дата</th><th class="time-col">⏰ Время</th>';
         for (let i = 0; i < members.length; i++) {
             const member = members[i];
             headerHtml += `<th class="member-col">
@@ -499,7 +499,7 @@ function generateDates() {
                 </div>
             </th>`;
         }
-        headerHtml += '</tr>';
+        headerHtml += '累';
         thead.innerHTML = headerHtml;
         
         let rowsHtml = '';
@@ -511,9 +511,9 @@ function generateDates() {
                 const hour = HOURS[hourIndex];
                 rowsHtml += `<tr class="${isNewDate && hourIndex === 0 ? 'date-separator' : ''}">`;
                 if (hourIndex === 0) {
-                    rowsHtml += `<td class="date-col" rowspan="${HOURS.length}" style="vertical-align: middle;">${date.label}</td>`;
+                    rowsHtml += `<td class="date-col" rowspan="${HOURS.length}" style="vertical-align: middle;">${date.label}累`;
                 }
-                rowsHtml += `<td class="time-col">${hour}</td>`;
+                rowsHtml += `<td class="time-col">${hour}累`;
                 
                 for (let member of members) {
                     const status = answers[member]?.[date.fullDate]?.[hour] || 'no';
@@ -531,9 +531,9 @@ function generateDates() {
                                 data-member="${member}" data-date="${date.fullDate}" data-hour="${hour}" data-status="yes"
                                 ${!canEdit ? 'disabled' : ''}>✓</button>
                         </div>
-                    </td>`;
+                    舼`;
                 }
-                rowsHtml += `</tr>`;
+                rowsHtml += `翾`;
             }
             lastDate = date.fullDate;
         }
@@ -591,13 +591,4 @@ function generateDates() {
         document.getElementById('deletePastDatesBtn').onclick = deletePastDates;
         document.getElementById('applyDateRange').onclick = applyDateRange;
         
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.onclick = () => setDayFilter(btn.dataset.day);
-        });
-        
-        document.getElementById('userNameInput').addEventListener('keypress', e => { if (e.key === 'Enter') loginOrCreate(); });
-    }
-    init();
-</script>
-</body>
-</html>
+        document
