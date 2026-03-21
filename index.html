@@ -591,4 +591,13 @@
         document.getElementById('deletePastDatesBtn').onclick = deletePastDates;
         document.getElementById('applyDateRange').onclick = applyDateRange;
         
-        document
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.onclick = () => setDayFilter(btn.dataset.day);
+        });
+        
+        document.getElementById('userNameInput').addEventListener('keypress', e => { if (e.key === 'Enter') loginOrCreate(); });
+    }
+    init();
+</script>
+</body>
+</html>
