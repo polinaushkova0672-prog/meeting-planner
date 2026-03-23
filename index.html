@@ -221,37 +221,48 @@
         }
     }
 
-    function saveToCloud() {
-        const dataToSave = { members, answers, lastUpdated: Date.now() };
-        dbRef.set(dataToSave).catch(() => setSyncStatus('error'));
-    }
+function saveToCloud() {
+    const dataToSave = { 
+        members: members, 
+        answers: answers, 
+        currentDates: currentDates,
+        lastUpdated: Date.now() 
+    };
+    dbRef.set(dataToSave).catch(() => setSyncStatus('error'));
+}
 
-    function loadFromCloud() {
-        dbRef.on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                if (data.members) members = data.members;
-                if (data.answers) answers = data.answers;
-                members.forEach(member => {
-                    if (!answers[member]) answers[member] = {};
-                    currentDates.forEach(date => {
-                        if (!answers[member][date.fullDate]) answers[member][date.fullDate] = {};
-                        HOURS.forEach(hour => {
-                            if (!answers[member][date.fullDate][hour]) answers[member][date.fullDate][hour] = 'no';
-                        });
+  function loadFromCloud() {
+    dbRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            if (data.members) members = data.members;
+            if (data.answers) answers = data.answers;
+            if (data.currentDates && data.currentDates.length > 0) {
+                currentDates = data.currentDates;
+            } else {
+                currentDates = generateDates();
+            }
+            members.forEach(member => {
+                if (!answers[member]) answers[member] = {};
+                currentDates.forEach(date => {
+                    if (!answers[member][date.fullDate]) answers[member][date.fullDate] = {};
+                    HOURS.forEach(hour => {
+                        if (!answers[member][date.fullDate][hour]) answers[member][date.fullDate][hour] = 'no';
                     });
                 });
-                renderTable();
-                updateAnalytics();
-                setSyncStatus('connected');
-            } else if (isInitialLoad) {
-                members = [];
-                answers = {};
-                saveToCloud();
-            }
-            isInitialLoad = false;
-        }, () => setSyncStatus('error'));
-    }
+            });
+            renderTable();
+            updateAnalytics();
+            setSyncStatus('connected');
+        } else if (isInitialLoad) {
+            currentDates = generateDates();
+            members = [];
+            answers = {};
+            saveToCloud();
+        }
+        isInitialLoad = false;
+    }, () => setSyncStatus('error'));
+}
 
     function saveAndSync() { saveToCloud(); }
 
@@ -357,39 +368,40 @@
     }
 
     function deletePastDates() {
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
-        const todayStr = `${year}-${month}-${day}`;
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${year}-${month}-${day}`;
 
-        const newDates = currentDates.filter(date => date.fullDate >= todayStr);
-        if (newDates.length === currentDates.length) {
-            alert('Нет прошедших дат для удаления');
-            return;
-        }
-        if (confirm(`Удалить ${currentDates.length - newDates.length} прошедших дат?`)) {
-            currentDates = newDates;
-            const newAnswers = {};
-            members.forEach(member => {
-                newAnswers[member] = {};
-                currentDates.forEach(date => {
-                    newAnswers[member][date.fullDate] = {};
-                    HOURS.forEach(hour => {
-                        if (answers[member] && answers[member][date.fullDate]) {
-                            newAnswers[member][date.fullDate][hour] = answers[member][date.fullDate][hour] || 'no';
-                        } else {
-                            newAnswers[member][date.fullDate][hour] = 'no';
-                        }
-                    });
+    const newDates = currentDates.filter(date => date.fullDate >= todayStr);
+    if (newDates.length === currentDates.length) {
+        alert('Нет прошедших дат для удаления');
+        return;
+    }
+    if (confirm(`Удалить ${currentDates.length - newDates.length} прошедших дат?`)) {
+        currentDates = newDates;
+        
+        const newAnswers = {};
+        members.forEach(member => {
+            newAnswers[member] = {};
+            currentDates.forEach(date => {
+                newAnswers[member][date.fullDate] = {};
+                HOURS.forEach(hour => {
+                    if (answers[member] && answers[member][date.fullDate]) {
+                        newAnswers[member][date.fullDate][hour] = answers[member][date.fullDate][hour] || 'no';
+                    } else {
+                        newAnswers[member][date.fullDate][hour] = 'no';
+                    }
                 });
             });
-            answers = newAnswers;
-            saveAndSync();
-            renderTable();
-            alert('Прошедшие даты удалены');
-        }
+        });
+        answers = newAnswers;
+        saveAndSync();
+        renderTable();
+        alert('Прошедшие даты удалены');
     }
+}
 
     function updateAnalytics() {
         if (members.length === 0) {
